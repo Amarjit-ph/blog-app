@@ -1,16 +1,21 @@
 import createDataContext from './createDataContext'
+import jsonServer from '../api/jsonServer'
 
-//18
 
 // REDUCER [GUN]
 const blogReducer = (state, action) => {
     switch (action.type) {
+        case 'get_blogposts':
+            return action.payload;
+
+        /*
         case 'add_blogpost':
             return [...state, {
                 id: state.length + 1,
                 title: action.payload.title,
                 content: action.payload.content
             }];
+        */
         case 'edit_blogpost':
             return state.map((blogPost) => {
                 if (blogPost.id === action.payload.id) {
@@ -28,23 +33,44 @@ const blogReducer = (state, action) => {
 
 // FIRE FUNCTION [FIRE]
 const addBlogPost = dispatch => {
-    return (title, content, callback) => {
+    return async (title, content, callback) => {
+        await jsonServer.post('/blogposts', { title: title, content: content });
+        if (callback) {
+            callback();
+        }
+
         //DISPATCH FUNCTION [AMMO]
+        /*
         dispatch({ type: 'add_blogpost', payload: { title, content } });
         callback();
+        */
     };
 };
 const deleteBlogPost = dispatch => {
-    return (id) => {
+    return async (id) => {
+        await jsonServer.delete(`/blogposts/${id}`);
         dispatch({ type: 'delete_blogpost', payload: id })
     }
 }
 
 const editBlogPost = dispatch => {
-    return (id, title, content, callback) => {
+    return async (id, title, content, callback) => {
+        await jsonServer.put(`/blogposts/${id}`, { title, content })
+
         dispatch({ type: 'edit_blogpost', payload: { id, title, content } });
         callback();
+
     }
 }
 
-export const { Context, Provider } = createDataContext(blogReducer, { addBlogPost, deleteBlogPost, editBlogPost }, [{ title: 'Debug Javascript', content: 'Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World ', id: 0 }]);
+const getBlogPosts = dispatch => {
+    return async () => {
+        const response = await jsonServer.get("/blogposts");
+        // response.data = [{},{}]
+        dispatch({ type: 'get_blogposts', payload: response.data });
+    }
+}
+//CONTEXT
+
+export const { Context, Provider }
+    = createDataContext(blogReducer, { addBlogPost, deleteBlogPost, editBlogPost, getBlogPosts }, []);
